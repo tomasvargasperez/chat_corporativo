@@ -13,7 +13,7 @@ const app = express();
 // Estableciendo la URL de conexión a la base de datos. 
 // // Si existe una variable de entorno DB_URL, la usamos; de lo contrario, utilizamos una cadena de conexión local.
 const DB_URL = process.env.DB_URL || 
-'mongodb://localhost:27017/mi_base_de_datos'; 
+'mongodb://localhost:27017/chat_bbdd'; 
 
 // Conexión a la base de datos MongoDB utilizando Mongoose. 
 // // Usamos useNewUrlParser y useUnifiedTopology para evitar advertencias de deprecación.
@@ -42,18 +42,7 @@ app.listen(port, () => {
     console.log(`Servidor escuchando en el puerto ${port}`); 
 });
 
-
-//const UserController = require('./controllers/UserController');
-
-
-
-// Importación del enrutador de Express 
-//const router = express.Router(); 
-
 // Inicialización del servidor Express 
-//app.get('/', (req, res) => {
-//    res.send('¡Servidor funcionando correctamente');
-//  });
-
-
-
+app.get('/', (req, res) => {
+    res.send('¡Servidor funcionando correctamente');
+});

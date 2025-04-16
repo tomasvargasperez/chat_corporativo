@@ -4,7 +4,7 @@ const UserSchema = new mongoose.Schema({
         type: Number,
         required: true,
         unique: true
-      }
+      },
     name: {
         type: String,
         required: true,
@@ -14,11 +14,11 @@ const UserSchema = new mongoose.Schema({
           },
           message: props => `${props.value} no es un nombre válido!`
         }
-      }
+      },
     lastname: {
         type: String,
         required: true
-      }
+      },
     email: {
         type: String,
         required: true,
@@ -29,10 +29,10 @@ const UserSchema = new mongoose.Schema({
           },
           message: props => `${props.value} no es un correo electrónico válido!`
         }
-      }
+      },
     password: {
         type: String,
         required: true
-      }     
+      },     
   });
 module.exports = mongoose.model('User', UserSchema);

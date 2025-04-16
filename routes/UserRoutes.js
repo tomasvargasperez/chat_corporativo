@@ -11,22 +11,37 @@ router.get('/user', userController.validateToken, async (req, res) => {
      //Traer todos los usuarios 
      //Esta ruta obtiene todos los usuarios de la base de datos 
      //Usando el método find() del modelo UserSchema. 
-     let users = await UserSchema.find(); 
-     res.json(users); 
+	try {
+		let users = await UserSchema.find();
+		res.json(users);
+	} catch (error) {
+		res.status(500).json({"status": "error", "message": "Error al obtener usuarios"});
+	}
 });
 
 //Obtener un usuario por su ID
-router.get('/user/:id', async (req, res) => { 
+router.get('/user/:id', async (req, res) => {
+	try {	
     //Traer un usuario especifico pasando el ID 
     //Esta ruta obtiene un usuario específico de la base de datos 
     //usando el método findById() del modelo UserSchema. 
-    var id = req.params.id; 
-    let user = await UserSchema.findById(id); 
-    res.json(user);  cancelAnimationFrame
-    
-    //Obtener un usuario por su Mail
-    const query = UserSchema.where({ email: email }); // 
-    const user = await query.findOne() 
+		var id = req.params.id; 
+		let user = await UserSchema.findById(id); 
+		res.json(user);
+	} catch (error) {
+		res.status(500).json({"status": "error", "message": "Error al obtener usuarios"});
+	}
+});
+//Obtener un usuario mediante mail
+router.get('/user/email/:email', async (req, res) => {
+    try {
+        const email = req.params.email;
+        const query = UserSchema.where({ email: email });
+        const user = await query.findOne();
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({"status": "error", "message": "Error al buscar usuario por email"});
+    }
 });
 
 //Crear un nuevo usuario
@@ -63,9 +78,9 @@ router.patch('/user/:id', (req, res) => {
     //Actualizar un usuario 
     //Esta ruta actualiza un usuario existente en la base de datos. 
     //Se obtiene el ID del usuario de los parámetros de la URL.
-    var id = req.params.id;
+	var id = req.params.id;
    //Se crea un objeto con los datos actualizados del usuario.
-   var updateUser = { 
+	var updateUser = { 
         name: req.body.name, 
         lastname: req.body.lastname, 
         email: req.body.email, 
@@ -89,11 +104,11 @@ router.delete('/user/:id', (req, res) => {
     var id = req.params.id; 
     // Se elimina el usuario de la base de datos utilizando deleteOne(). 
     UserSchema.deleteOne({_id: id}).then(() => { 
-        res.json({"status": "success", "message": "User deleted successfully"});
+        res.json({"status": "success", "message": "Usuario eliminado correctamente"});
          }).catch((error) => { 
         // Se maneja cualquier error que pueda ocurrir al eliminar el usuario. 
         console.log(error); 
-        res.json({"status": "failed", "message": "Error deleting user"}); 
+        res.json({"status": "failed", "message": "Error al eliminar usuario"}); 
     }); 
 });
 
@@ -109,3 +124,4 @@ router.post('/login', (req, res) => {
         res.send(result); 
     }); 
 });
+module.exports = router;
