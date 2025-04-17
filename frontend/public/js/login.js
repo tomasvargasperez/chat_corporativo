@@ -1,0 +1,17 @@
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+      })
+    });
+    const data = await response.json();
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userName', data.user.name);
+      window.location.href = '/chat.html';
+    }
+  });
