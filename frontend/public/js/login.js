@@ -11,7 +11,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = await response.json();
     if (data.token) {
       localStorage.setItem('token', data.token);
-      localStorage.setItem('userName', data.user.name);
-      window.location.href = '/chat.html';
-    }
+      localStorage.setItem('userName', data.user?.name || 'Usuario');
+      window.location.href = '/chat'; // Redirección explícita
+    } else {
+    alert(data.message || 'Error en el login');
+	}
   });
