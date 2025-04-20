@@ -42,3 +42,16 @@ socket.on('message_history', (messages) => {
     </div>
   `).join('');
 });
+
+// ✅ Nuevo: Botón de cerrar sesión
+const logoutButton = document.getElementById('logoutButton');
+if (logoutButton) {
+  logoutButton.addEventListener('click', () => {
+    // Elimina datos del usuario del almacenamiento local
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    // Redirige al login
+    window.location.href = '/';
+  });
+}
