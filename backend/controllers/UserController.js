@@ -24,7 +24,14 @@ class UserController
 				process.env.JWT_SECRET, 
 				{ expiresIn: '1h' }
 			); 
-			return { "status": "success", "token": token }; 
+			return { 
+				status: "success", 
+				token: token,
+				user: {
+				  userId: user._id,
+				  name: user.name
+				}
+			};		  
 		} catch (error) { 
 			console.log(error);
 			return { "status": "error", "message": "Error al iniciar sesión"};
