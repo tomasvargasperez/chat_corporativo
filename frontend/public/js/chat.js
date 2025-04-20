@@ -26,9 +26,11 @@ document.getElementById('sendButton').addEventListener('click', () => {
 
 socket.on('new_message', (msg) => {
   const messagesDiv = document.getElementById('messages');
+  const time = new Date(msg.timestamp).toLocaleString();
+
   messagesDiv.innerHTML += `
     <div class="message">
-      <strong>${msg.user.name}:</strong> ${msg.text}
+      <strong>${msg.user.name}</strong> <span class="timestamp">${time}</span>: ${msg.text}
     </div>
   `;
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
