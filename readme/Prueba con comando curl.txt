@@ -3,7 +3,7 @@ prueba con comando curl
 --------------------------------------------------------------
 crear un usuario:
 ----------------
-curl -X POST http://localhost:3000/user -H "Content-Type: application/json" -d "{\"name\":\"Carlos\",\"lastname\":\"Pérez\",\"email\":\"carlos@example.com\",\"password\":\"123456\",\"id\":100}"
+curl -X POST http://localhost:3000/user -H "Content-Type: application/json" -d "{\"name\":\"ana\",\"lastname\":\"aedo\",\"email\":\"ana@example.com\",\"password\":\"24680\",\"id\":150}"
               
 RESPUESTA:
 {"id":110,"name":"Tomas","lastname":"Pérez","email":"carlos@google.com","password":"$2b$10$KhitdCQqkAkzDmtybPFmgOCGO9FDfWW1ktry8XFSBZ0z3M9N/IAjm","_id":"68002a45d84734a34d1f0d7a","__v":0}

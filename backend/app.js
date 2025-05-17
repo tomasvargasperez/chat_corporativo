@@ -2,66 +2,89 @@
 const express = require('express'); 
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const userRoutes = require('./routes/UserRoutes'); 
-const http = require('http'); // Nuevo: Para Socket.io
-const path = require('path'); // Nuevo: Para manejar rutas de archivos
-const Message = require('./models/Message'); // Nuevo: Modelo de mensajes
+const cors = require('cors');
+const http = require('http');
+const path = require('path');
+const socketIo = require('socket.io');
+const userRoutes = require('./routes/UserRoutes');
+const messageRoutes = require('./routes/MessageRoutes');
+const Message = require('./models/Message');
+const User = require('./models/User')
 
-// Configuración de variables de entorno 
+// Cargar variables de entorno
 dotenv.config();
 
-// Creación de una instancia de Express 
+// Inicialización de Express y servidor HTTP
 const app = express();
-const server = http.createServer(app); // Nuevo: Crear servidor HTTP para Socket.io
-const io = require('socket.io')(server);
+const server = http.createServer(app);
 
-// Conexion a BBDD Mongodb
+// Configurar Socket.IO con CORS para Vue
+const io = socketIo(server, {
+    cors: {
+        origin: 'http://localhost:5173', // Para desarrollo Vue
+        methods: ['GET', 'POST']
+    }
+});
+
+// Conexión a MongoDB
 const DB_URL = process.env.DB_URL || 'mongodb://localhost:27017/chat_bbdd'; 
-mongoose.connect(DB_URL, { 
-    useNewUrlParser: true, 
-    useUnifiedTopology: true 
-}) 
-        .then(() => { console.log("Conexión a la base de datos exitosa"); }) // Si la conexión es exitosa, mostramos un mensaje de éxito.
-        .catch((error) => { console.error("Error al conectar a la base de datos:", error); }); // Si hay un error al conectar, mostramos un mensaje de error con la descripción del error.     
-        
+mongoose.connect(DB_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('✅ Conexión a la base de datos exitosa'))
+.catch((error) => console.error('❌ Error al conectar a la base de datos:', error));
+
 // Middlewares
-app.use(express.urlencoded({ extended: true })); 
-app.use(express.json()); 
+app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-// Nuevo: Servir archivos estáticos del frontend
-app.use(express.static(path.join(__dirname, '../frontend/public')));
-app.set('views', path.join(__dirname, '../frontend/views'));
-app.set('view engine', 'html');
-
-// Configuración de Socket.io
+// Socket.IO: Manejo de mensajes y canales
 io.on('connection', (socket) => {
-    console.log('Usuario conectado:', socket.id);
+    console.log('🔌 Usuario conectado:', socket.id);
 
     socket.on('join_channel', async (channel) => {
         socket.join(channel);
         console.log(`📨 Usuario unido al canal: ${channel}`);
-
         try {
             const messages = await Message.find({ channel })
-            .limit(50)
-            .populate('user');
-        socket.emit('message_history', messages);
+                .limit(50)
+                .populate('user');
+            socket.emit('message_history', messages);
         } catch (error) {
-            console.error("Error al cargar historial:", error);
+            console.error("❌ Error al cargar historial:", error);
         }
     });
 
     socket.on('send_message', async ({ channel, text, userId }) => {
         try {
-            const newMessage = new Message({ 
-                channel, 
-                user: userId, 
-                text 
+            // Validar si userId existe
+            if (!userId) {
+                console.error("❌ No se recibió userId");
+                return;
+            }
+
+            // Validar que userId sea un ObjectId válido
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                console.error("❌ userId no es un ObjectId válido:", userId);
+                return;
+            }
+
+            // Convertir userId a ObjectId
+            const userObjectId = new mongoose.Types.ObjectId(userId);
+
+            // Crear y guardar el mensaje
+            const newMessage = new Message({ channel, user: userObjectId, text });
+            const savedMessage = await newMessage.save();
+
+            // Popular el usuario
+            const populatedMessage = await Message.populate(savedMessage, {
+                path: 'user',
+                select: 'name'
             });
 
-            const savedMessage = await newMessage.save();
-            const populatedMessage = await Message.populate(savedMessage, { path: 'user', select: 'name' });
-        
+            // Emitir mensaje al canal
             io.to(channel).emit('new_message', {
                 text: populatedMessage.text,
                 user: {
@@ -71,44 +94,30 @@ io.on('connection', (socket) => {
                 timestamp: savedMessage.timestamp
             });
         } catch (error) {
-            console.error("Error al guardar mensaje:", error);
+            console.error("❌ Error al guardar mensaje:", error);
         }
     });
-    socket.on('disconnect', () => {
-        console.log('⚠️ Usuario desconectado:', socket.id);
+
+        socket.on('disconnect', () => {
+            console.log('⚠️ Usuario desconectado:', socket.id);
+        });
     });
-});
-                
 
 // Rutas API
-app.use('/', userRoutes);
+app.use('/api/users', userRoutes); // ejemplo: POST /api/users/register
+app.use('/api/messages', messageRoutes); // ejemplo: GET /api/messages/general
+app.use('/', userRoutes); // <-- esto es esencial
 
-// Nuevo: Rutas para vistas
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/views/login.html'));
-});
+// Producción: servir frontend de Vue (si haces build)
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../frontend/vue-app/dist')));
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, '../frontend/vue-app/dist/index.html'));
+    });
+}
 
-app.get('/chat', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/views/chat.html'));
-});
-
-// Puerto en el que escuchará el servidor
+// Puerto y arranque del servidor
 const port = process.env.PORT || 3000;
-
-// Cambiamos app.listen por server.listen para Socket.io
 server.listen(port, () => {
-    console.log(`Servidor escuchando en el puerto ${port}`);
-});
-
-// Inicialización del servidor Express 
-//app.listen(port, () => { 
-    // Imprime un mensaje en la consola cuando el servidor se inicia correctamente 
-//    console.log(`Servidor escuchando en el puerto ${port}`); 
-//});
-
-
-
-// Inicialización del servidor Express 
-app.get('/', (req, res) => {
-    res.send('¡Servidor funcionando correctamente');
+    console.log(`🚀 Servidor backend escuchando en el puerto ${port}`);
 });
